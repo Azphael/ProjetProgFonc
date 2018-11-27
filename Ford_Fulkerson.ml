@@ -16,5 +16,3 @@ let rec search_path graph acu localisation target noeuds_dest =
 						end
 				end
 					
-					
-(** let 3 = search_path **)

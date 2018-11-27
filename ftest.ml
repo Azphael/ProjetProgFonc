@@ -1,4 +1,5 @@
 open Graph
+open Ford_Fulkerson
 
 let () =
 
@@ -12,19 +13,29 @@ let () =
   and outfile = Sys.argv.(4)
   
   (* These command-line arguments are not used for the moment. *)
-  and _source = Sys.argv.(2)
-  and _sink = Sys.argv.(3)
+  and source = Sys.argv.(2)
+  and sink = Sys.argv.(3)
   in
 
   (* Open file *)
   let graph = Gfile.from_file infile in
 
   (* Rewrite the graph that has been read. *)
-  let () = Gfile.write_file outfile graph in
+  (* let () = Gfile.write_file outfile graph in *)
   
   (* Export the graph as a Graphviz file. *)
-  let () = Gfile.export outfile graph in
+  (* let () = Gfile.export outfile graph in *)
 
-  ()
+  (* () *)
+  
+  
+  let afficher_result =  List.iter (fun (x,(y,z)) -> Printf.printf "%s --> %s,%d \n" x y z ) in
+  
+  let graph2 = map graph int_of_string in
+  
+  let toto = out_arcs graph2 source in
+	let test = search_path graph2 [source,(source,0)] source sink toto in
+		afficher_result test
+
 
 
