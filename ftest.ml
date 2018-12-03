@@ -33,9 +33,6 @@ let () =
   
   let graph2 = map graph int_of_string in
   
-  let toto = out_arcs graph2 source in
-	let test = search_path graph2 [source,(source,0)] source sink toto in
+	let test = find_path graph2 source sink in
 		afficher_result test
-
-
 
