@@ -64,38 +64,24 @@ let find_arc_path path id1 id2 =
 **)
 
 
-(** Revoir **)		
 (** Mise à jour du graph d'écart lié **)
 let update_graph graph path minflux =
-	let rec loop_update acu graph path minflux =
-		match graph with
-			| [] -> acu
-			| (x, (y, (z, v)) :: tl -> if ((find_arc path x y) = None) then loop_update acu tl path minflux (** le probleme semble venir du fait que graph est de la forme liste(id1, liste (id2, value) **)
-				else
-					let acu_upd_in_dest = add_arc acu x y (z, ((fun a -> (a + minflux)) v)) in
-						let acu_upd_out_dest = add_arc acu_upd_in_dest y x (z, ((fun (a,b) -> (a - b - minflux)) (z, v) )) in
-							loop_update acu_upd_out_dest tl path minflux
+	let f acu x listArcs = 
+			let rec loop_outarcs_update listArcs =
+				match listArcs with
+					| [] -> acu
+					| (y, (z,v)) :: tl ->
+							if ((find_arc path x y) = None) then loop_outarcs_update tl
+							else
+								let acu_upd_in_dest = add_arc acu x y (z, ((fun a -> (a + minflux)) v)) in
+									let acu_upd_out_dest = add_arc acu_upd_in_dest y x (z, ((fun (a,b) -> (a - b - minflux)) (z, v) )) in
+										acu_upd_out_dest
+			in
+				loop_outarcs_update listArcs
 	in
-		loop_update graph graph path minflux
-
-let 3 = update_graph
-
-let update_graph2 graph path minflux =
-	let rec loop_update2 acu graph path minflux =
-		match graph with
-			| [] -> acu
-			| (x, y) :: tl -> if ((find_arc path x y) = None)
-				then loop_update2 acu tl path minflux
-				else
-					begin match ((find_arc path x y) with
-						| (z, v) -> let acu_upd_in_dest = add_arc acu x y (z, ((fun a -> (a + minflux)) v)) in
-										let acu_upd_out_dest = add_arc acu_upd_in_dest y x (z, ((fun (a,b) -> (a - b - minflux)) (z, v) )) in
-											loop_update2 acu_upd_out_dest tl path minflux
-	in
-		loop_update2 graph graph path minflux
+		v_fold graph f graph
 
 
-		
 (** Revoir **)	
 (** Fonction renvoyant un graphe sans les arcs retour du graphe d'écart  **)
 let graphe_sexy graph_origine graph_modifie =

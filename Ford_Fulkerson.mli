@@ -18,7 +18,9 @@ val minflux:  ('a * ('b * ('c * int))) list -> int
 val give_flow_max: ('a * ('b * ('c * int))) list -> 'b -> int
 
 (** Mise à jour du graph d'écart lié **)
-val update_graph: (Graph.id * (Graph.id * (int * int))) list
+val update_graph: (int * int) Graph.graph ->
+         'a Graph.graph -> int -> (int * int) Graph.graph
+
 
 (** Fonction renvoyant un graphe sans les arcs retour du graphe d'écart  **)
 val graphe_sexy: int
