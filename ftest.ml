@@ -28,7 +28,7 @@ let () =
   let () = Gfile.export (outfile ^ ".gvz") string_graph in
 
   (* Run the Ford-Fulkerson algorithm on the imported graph *)
-  let solution = Ford_Fulkerson.ford_fulkerson int_graph source sink in
   Printf.printf "\n==== Running Ford-Fulkerson Algorithm on '%s' ====\n%!" infile ;
-  Ford_Fulkerson.export (outfile ^ ".ff.gvz") solution source sink
+  let solution = Ford_Fulkerson.ford_fulkerson int_graph source sink in
+    Ford_Fulkerson.export (outfile ^ ".ff.gvz") solution source sink
   

@@ -10,28 +10,30 @@ let formate_graph graph = Graph.map graph ( fun z -> (z, 0) )
 
 (** Fonctions de recherche de chemin **)
 (** Fonction principale renvoyant un graphe chemin avec arcs sortants uniques pour chacun de ses noeuds **)
-let rec search_path graph path localisation target noeuds_dest =
+let rec search_path graph path localisation target =
 	if localisation = target then path
 	else
-		let arcs_potentiel = List.filter ( fun (y, (z, v)) -> (v < z) ) noeuds_dest in
-			let f path localisation arcs_potentiel = 
-				let rec loop_search_path arcs_potentiel =
-					match arcs_potentiel with
-						| [] -> path
-						| (y, (z, v)) :: tl ->
-							if ((Graph.node_exists path y) = true ) then loop_search_path tl
-							else
+		let f path localisation out_arcs = 
+			let rec loop_search_path out_arcs =
+				match out_arcs with
+					| [] -> path
+					| (y, (z, v)) :: tl ->
+						if ((Graph.node_exists path y) = true ) then loop_search_path tl
+						else
+							if (v < z) then 
 								let new_arc_path = Graph.add_arc path localisation y (z,v) in
-									search_path graph new_arc_path y target (Graph.out_arcs graph y)
-				in
-					loop_search_path arcs_potentiel
+									search_path graph new_arc_path y target
+							else
+								loop_search_path tl
 			in
-				Graph.v_fold path f graph
+				loop_search_path out_arcs
+		in
+			Graph.v_fold path f graph
 
 				
 (** Habillage "User Friendly" de la fonction de recherche de chemin **)				
 let find_path graph source target =
-	search_path graph Graph.empty_graph source target ( (fun x -> Graph.out_arcs graph x) source)
+	search_path graph Graph.empty_graph source target
 
 
 (** Fonction de recherche du flux max pouvant passer par le graphe de chemin **)
@@ -48,7 +50,7 @@ let max_flux_passant path =
 		Graph.v_fold path f max_int
 
 
-(** Mise à jour du graph d'écart lié parcours de comparaison sur le graphe **)
+(** Mise à jour du graph d'écart lié : parcours de comparaison sur le graphe **)
 let update_graph graph path maxflux =
 	let f update x listArcs = 
 		let rec loop_outarcs_update listArcs =
@@ -100,7 +102,7 @@ let resolve_ford_fulkerson graph source puit =
 			if (pathfound = Graph.empty_graph) then acu
 			else
 				let maxflow = max_flux_passant pathfound in
-					loop_resolve_ff (update_graph acu pathfound maxflow)
+					loop_resolve_ff (alt_update_graph acu pathfound maxflow)
 		in
 			loop_resolve_ff graph
 
