@@ -27,5 +27,8 @@ val graphe_sexy:  ('a * 'b) Graph.graph -> ('a * 'b) Graph.graph -> ('a * 'b) Gr
 val resolve_ford_fulkerson: (int * int) Graph.graph -> Graph.id -> Graph.id -> (int * int) Graph.graph
 
 (** Fonction user friendly renvoyant un graphe solution selon la méthode Ford-Fulkerson **)
+(** ford_fulkerson graph source puit --> renvoi un graph **)
 val ford_fulkerson: int Graph.graph -> Graph.id -> Graph.id -> (int * int) Graph.graph
+
+val export: string -> (int * int) Graph.graph -> string -> string -> unit
 

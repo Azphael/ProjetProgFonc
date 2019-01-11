@@ -1,10 +1,11 @@
 open Graph
+open Printf
 
 
 (** Algo Ford Fulkerson **)
 
 (** Mise en forme d'un graphe pour prise en compte des variations de flux sur les arcs **)
-let formate_graph graph = map graph ( fun z -> (z, 0) )
+let formate_graph graph = Graph.map graph ( fun z -> (z, 0) )
 
 
 (** Fonctions de recherche de chemin **)
@@ -18,19 +19,19 @@ let rec search_path graph path localisation target noeuds_dest =
 					match arcs_potentiel with
 						| [] -> path
 						| (y, (z, v)) :: tl ->
-							if ((node_exists path y) = true ) then loop_search_path tl
+							if ((Graph.node_exists path y) = true ) then loop_search_path tl
 							else
-								let new_arc_path = add_arc path localisation y (z,v) in
-									search_path graph new_arc_path y target (out_arcs graph y)
+								let new_arc_path = Graph.add_arc path localisation y (z,v) in
+									search_path graph new_arc_path y target (Graph.out_arcs graph y)
 				in
 					loop_search_path arcs_potentiel
 			in
-				v_fold path f graph
+				Graph.v_fold path f graph
 
 				
 (** Habillage "User Friendly" de la fonction de recherche de chemin **)				
 let find_path graph source target =
-	search_path graph empty_graph source target ( (fun x -> out_arcs graph x) source)
+	search_path graph Graph.empty_graph source target ( (fun x -> Graph.out_arcs graph x) source)
 
 
 (** Fonction de recherche du flux max pouvant passer par le graphe de chemin **)
@@ -44,7 +45,7 @@ let max_flux_passant path =
 		in
 			loop_fluxmax mini listArcs
 	in
-		v_fold path f max_int
+		Graph.v_fold path f max_int
 
 
 (** Mise à jour du graph d'écart lié parcours de comparaison sur le graphe **)
@@ -54,14 +55,14 @@ let update_graph graph path maxflux =
 			match listArcs with
 				| [] -> update
 				| (y, (z,v)) :: tl ->
-						if ((find_arc path x y) = None) then loop_outarcs_update tl
+						if ((Graph.find_arc path x y) = None) then loop_outarcs_update tl
 						else
-							let acu_upd_in_dest = add_arc update x y (z, (v + maxflux)) in
-								add_arc acu_upd_in_dest y x (z, (z - v - maxflux))
+							let acu_upd_in_dest = Graph.add_arc update x y (z, (v + maxflux)) in
+								Graph.add_arc acu_upd_in_dest y x (z, (z - v - maxflux))
 		in
 			loop_outarcs_update listArcs
 	in
-		v_fold graph f graph
+		Graph.v_fold graph f graph
 
 
 (** Mise à jour alternative du graph d'écart lié : parcours de comparaison sur le path **)		
@@ -70,10 +71,10 @@ let alt_update_graph graph path maxflux =
 			match listArc with
 				| [] -> updatedgraph
 				| (y, (z,v)) :: tl ->
-						let acu_upd_in_dest = add_arc updatedgraph x y (z, (v + maxflux)) in
-							add_arc acu_upd_in_dest y x (z, (z - v - maxflux))
+						let acu_upd_in_dest = Graph.add_arc updatedgraph x y (z, (v + maxflux)) in
+							Graph.add_arc acu_upd_in_dest y x (z, (z - v - maxflux))
 	in
-		v_fold path f graph
+		Graph.v_fold path f graph
 
 
 (** Suppression dans le graphe solution des arcs non présents dans le graphe d'origine **)		
@@ -83,31 +84,20 @@ let graphe_sexy graph_origine graph_fin =
 			match listArcs with
 			| [] -> acu
 			| (y, (z, v)) :: tl ->
-				if ((find_arc graph_origine x y) = None) then loop_outarcs_compare listArcs
+				if ((Graph.find_arc graph_origine x y) = None) then loop_outarcs_compare listArcs
 				else
-					add_arc graph_origine x y (z,v)
+					Graph.add_arc graph_origine x y (z,v)
 		in
 			loop_outarcs_compare listArcs
 	in	
-		v_fold graph_fin f graph_origine	
+		Graph.v_fold graph_fin f graph_origine	
 
 		
 (** Fonction de résolution de graphe selon la méthode Ford-Fulkerson **)
-(** let resolve_ford_fulkerson graph source puit =
-	let graph_modifie = map graph ( fun z -> (z,0) ) in
-		let rec resolve_loop acu =
-			let pathfound = find_path graph_modifie source puit in
-				match pathfound with
-				| [] -> acu
-				| x -> update_graph acu x (max_flux_passant x)
-		in
-			resolve_loop graph_modifie
-**)
-			
 let resolve_ford_fulkerson graph source puit =
 	let rec loop_resolve_ff acu =
 		let pathfound = find_path graph source puit in
-			if (pathfound = empty_graph) then acu
+			if (pathfound = Graph.empty_graph) then acu
 			else
 				let maxflow = max_flux_passant pathfound in
 					loop_resolve_ff (update_graph acu pathfound maxflow)
@@ -120,4 +110,27 @@ let ford_fulkerson graph source puit =
 	let graph_modifie = formate_graph graph in
 		let graph_fin = resolve_ford_fulkerson graph_modifie source puit in
 			graphe_sexy graph_modifie graph_fin
-					
+
+
+(** Fonction d'export des graphes solution de l'algorithme Ford-Fulkerson **)			
+let export file graph source target =
+
+  (* Open an export-file. *)
+  let ff = open_out file in
+
+  (* Write in this file the standard Graphviz form. *)
+  fprintf ff "digraph finite_state_machine {\n" ;
+  fprintf ff "rankdir=LR;\n" ;
+  fprintf ff "size=\"8.5\"\n" ;
+ 
+  fprintf ff "node [shape= circle];\n" ;
+  fprintf ff "\t%s [color = green];\n" source ;
+  fprintf ff "\t%s [color = red];\n" target ;
+   
+  (* Write all arcs with origin, target and labels *)
+  v_iter graph (fun id out -> List.iter (fun (id2, (a,b)) -> fprintf ff "%s -> %s [ label = \"%d/%d\" ];\n" id id2 b a) out) ;
+   
+  fprintf ff "}\n" ;
+
+  close_out ff ;
+  ()

@@ -18,21 +18,17 @@ let () =
   in
 
   (* Open file *)
-  let graph = Gfile.from_file infile in
+  let string_graph = Gfile.from_file infile in
+  let int_graph = Graph.map string_graph int_of_string in
 
   (* Rewrite the graph that has been read. *)
-  (* let () = Gfile.write_file outfile graph in *)
+  let () = Gfile.write_file (outfile ^ ".out") string_graph in
   
   (* Export the graph as a Graphviz file. *)
-  let () = Gfile.export outfile graph in
+  let () = Gfile.export (outfile ^ ".gvz") string_graph in
 
-  (* () *)
+  (* Run the Ford-Fulkerson algorithm on the imported graph *)
+  let solution = Ford_Fulkerson.ford_fulkerson int_graph source sink in
+  Printf.printf "\n==== Running Ford-Fulkerson Algorithm on '%s' ====\n%!" infile ;
+  Ford_Fulkerson.export (outfile ^ ".ff.gvz") solution source sink
   
-  
-  let afficher_result =  List.iter (fun (x,(y,z)) -> Printf.printf "%s --> %s,%d \n" x y z ) in
-  
-  let graph2 = map graph int_of_string in
-  
-	let test = find_path graph2 source sink in
-		afficher_result test
-
