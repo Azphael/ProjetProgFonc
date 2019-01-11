@@ -3,65 +3,12 @@ open Graph
 
 (** Algo Ford Fulkerson **)
 
-(**
-(** Fonctions sur les paths **)
-let out_arcs_path path id =
-  try List.assoc id path
-  with Not_found -> raise (Graph_error ("Node " ^ id ^ " does not exist in this path."))
-  
-  
-let find_arc_path path id1 id2 =
-  let out = out_arcs_path path id1 in
-    try Some (List.assoc id2 out)
-    with Not_found -> None
-**)
-	
-(** Fonctions de recherche de chemin **)	
-(** Fonction principale renvoyant un chemin sous forme de liste de noeud assoyé à son arc sortant **)
-
-(**
-let rec search_path graph acu localisation target noeuds_dest = 
-	if localisation = target then acu
-		else let arcs_potentiel = List.filter ( fun (y, (z, v)) -> (v < z) ) noeuds_dest in
-				begin match arcs_potentiel with
-					| [] -> []
-					| (y, (z, v)) :: tl -> 
-						begin match search_path graph ((localisation, [(y, (z,v))]) :: acu) y target (out_arcs graph y) with
-							| [] -> search_path graph acu localisation target tl
-							| acu -> acu
-						end
-				end
-**)
+(** Mise en forme d'un graphe pour prise en compte des variations de flux sur les arcs **)
+let formate_graph graph = map graph ( fun z -> (z, 0) )
 
 
-(**
-(** Revoir **)
-(** Fonction renvoyant la valeur du Flow max circulant dans le graphe **)
-let give_flow_max graph target =
-	let rec loop_maxflow flowmax graph target =
-		match graph with
-			| [] -> flowmax
-			| (x, (y, (z, v))) :: tl -> if (y = target) then loop_maxflow (flowmax + v) tl target
-				else loop_maxflow flowmax tl target
-	in
-		loop_maxflow 0 graph target
-**)
-
-
-(** 				
-let rec search_path graph path localisation target noeuds_dest = 
-	if localisation = target then path
-		else let arcs_potentiel = List.filter ( fun (y, (z, v)) -> (v < z) ) noeuds_dest in
-				begin match arcs_potentiel with
-					| [] -> path
-					| (y, (z, v)) :: tl -> 
-						begin match search_path graph (add_arc path localisation y (z,v)) y target (out_arcs graph y) with
-							| [] -> search_path graph path localisation target tl
-							| path -> path
-						end
-				end	
-**)
-
+(** Fonctions de recherche de chemin **)
+(** Fonction principale renvoyant un graphe chemin avec arcs sortants uniques pour chacun de ses noeuds **)
 let rec search_path graph path localisation target noeuds_dest =
 	if localisation = target then path
 	else
@@ -80,23 +27,13 @@ let rec search_path graph path localisation target noeuds_dest =
 			in
 				v_fold path f graph
 
-
-(** Fonction de recherche de chemin "User Friendly" **)				
+				
+(** Habillage "User Friendly" de la fonction de recherche de chemin **)				
 let find_path graph source target =
 	search_path graph empty_graph source target ( (fun x -> out_arcs graph x) source)
 
 
-(** Lecture de la valeur maximale de flux pouvant passer dans le chemin trouvé **)
-(** let max_flux_passant path =
-	let rec loop_fluxmax mini path =
-		match path with
-			| [] -> mini
-			| (x, (y, (z, v))) :: tl -> if (v < mini) then loop_fluxmax v tl
-				else loop_fluxmax mini tl
-	in
-		loop_fluxmax max_int path **)
-
-
+(** Fonction de recherche du flux max pouvant passer par le graphe de chemin **)
 let max_flux_passant path =
 	let f mini x listArcs =
 		let rec loop_fluxmax mini listArcs =
@@ -130,14 +67,11 @@ let update_graph graph path maxflux =
 (** Mise à jour alternative du graph d'écart lié : parcours de comparaison sur le path **)		
 let alt_update_graph graph path maxflux =
 	let f updatedgraph x listArc =
-		let rec loop_outarcs_update listArc =
 			match listArc with
 				| [] -> updatedgraph
 				| (y, (z,v)) :: tl ->
 						let acu_upd_in_dest = add_arc updatedgraph x y (z, (v + maxflux)) in
 							add_arc acu_upd_in_dest y x (z, (z - v - maxflux))
-		in
-			loop_outarcs_update listArc
 	in
 		v_fold path f graph
 
@@ -149,17 +83,17 @@ let graphe_sexy graph_origine graph_fin =
 			match listArcs with
 			| [] -> acu
 			| (y, (z, v)) :: tl ->
-				if ((find_arc graph_fin x y) = None) then loop_outarcs_compare listArcs
+				if ((find_arc graph_origine x y) = None) then loop_outarcs_compare listArcs
 				else
 					add_arc graph_origine x y (z,v)
 		in
 			loop_outarcs_compare listArcs
 	in	
-		v_fold graph_origine f graph_origine	
+		v_fold graph_fin f graph_origine	
 
 		
 (** Fonction de résolution de graphe selon la méthode Ford-Fulkerson **)
-let resolve_ford_fulkerson graph source puit =
+(** let resolve_ford_fulkerson graph source puit =
 	let graph_modifie = map graph ( fun z -> (z,0) ) in
 		let rec resolve_loop acu =
 			let pathfound = find_path graph_modifie source puit in
@@ -168,23 +102,22 @@ let resolve_ford_fulkerson graph source puit =
 				| x -> update_graph acu x (max_flux_passant x)
 		in
 			resolve_loop graph_modifie
+**)
+			
+let resolve_ford_fulkerson graph source puit =
+	let rec loop_resolve_ff acu =
+		let pathfound = find_path graph source puit in
+			if (pathfound = empty_graph) then acu
+			else
+				let maxflow = max_flux_passant pathfound in
+					loop_resolve_ff (update_graph acu pathfound maxflow)
+		in
+			loop_resolve_ff graph
 
-			
-(** let resolve_ford_fulkerson graph source puit =
-	let graph_modifie = map graph ( fun z -> (z, 0) ) in
-		let rec loop_resolve_ff acu **)
-			
-			
-			
-			
-let 5 = resolve_ford_fulkerson
-					
 
 (** Fonction user friendly renvoyant un graphe solution selon la méthode Ford-Fulkerson **)
 let ford_fulkerson graph source puit =
-	let graph_fin = resolve_ford_fulkerson graphe source puit in
-		graphe_sexy graph graph_fin
+	let graph_modifie = formate_graph graph in
+		let graph_fin = resolve_ford_fulkerson graph_modifie source puit in
+			graphe_sexy graph_modifie graph_fin
 					
-
-let 6 = ford_fulkerson
-	

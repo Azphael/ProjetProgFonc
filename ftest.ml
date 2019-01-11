@@ -24,7 +24,7 @@ let () =
   (* let () = Gfile.write_file outfile graph in *)
   
   (* Export the graph as a Graphviz file. *)
-  (* let () = Gfile.export outfile graph in *)
+  let () = Gfile.export outfile graph in
 
   (* () *)
   
