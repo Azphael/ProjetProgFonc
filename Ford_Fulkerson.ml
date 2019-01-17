@@ -11,7 +11,7 @@ let formate_graph graph = Graph.map graph ( fun z -> (z, 0) )
 (** Fonctions de recherche de chemin **)
 (** Fonction principale renvoyant un graphe chemin avec arcs sortants uniques pour chacun de ses noeuds **)
 let rec search_path graph path localisation target =
-	if localisation = target then path
+	if localisation = target then (Graph.add_node path localisation)
 	else
 		let f path localisation out_arcs = 
 			let rec loop_search_path out_arcs =
@@ -42,7 +42,7 @@ let max_flux_passant path =
 		let rec loop_fluxmax mini listArcs =
 			match listArcs with
 				| [] -> mini
-				| (y, (z, v)) :: tl -> if (v < mini) then loop_fluxmax v tl
+				| (y, (z, v)) :: tl -> if ((z -v) < mini) then loop_fluxmax (z - v) tl
 					else loop_fluxmax mini tl
 		in
 			loop_fluxmax mini listArcs
@@ -102,6 +102,7 @@ let resolve_ford_fulkerson graph source puit =
 			if (pathfound = Graph.empty_graph) then acu
 			else
 				let maxflow = max_flux_passant pathfound in
+					Printf.printf"%d\n" maxflow; 
 					loop_resolve_ff (alt_update_graph acu pathfound maxflow)
 		in
 			loop_resolve_ff graph

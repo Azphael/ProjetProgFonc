@@ -16,8 +16,8 @@ val find_path: ('a * 'a) Graph.graph -> Graph.id -> Graph.id -> ('a * 'a) Graph.
 
 
 (** Valeur minimale de flux pouvant passer dans le chemin trouvé **)
-(** ax_flux_passant path --> renvoi la valeur de flux maximal pouvant circuler dans le graphe de chemin **)
-val max_flux_passant: ('a * int) Graph.graph -> int
+(** max_flux_passant path --> renvoi la valeur de flux maximal pouvant circuler dans le graphe de chemin **)
+val max_flux_passant: (int * int) Graph.graph -> int
 
 
 (** Mise à jour du graph d'écart lié : parcours de comparaison sur le graphe **)
